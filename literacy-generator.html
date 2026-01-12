@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌈 魔法识字小报生成器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ==================== 魔法风格CSS变量 ==================== */
+        :root {
+            --magic-pink: #FF6B9D;
+            --magic-purple: #A855F7;
+            --magic-blue: #4ECDC4;
+            --magic-yellow: #FFE66D;
+            --magic-green: #84CC16;
+            --magic-orange: #FB923C;
+            --bg-gradient: linear-gradient(135deg, #FFF5F7 0%, #E8F4F8 50%, #FFF9E6 100%);
+            --card-bg: #FFFFFF;
+            --text-color: #4A5568;
+            --text-light: #718096;
+            --border-radius: 24px;
+            --border-radius-sm: 16px;
+            --shadow: 0 8px 30px rgba(168, 85, 247, 0.15);
+            --shadow-hover: 0 12px 40px rgba(168, 85, 247, 0.25);
+        }
+
+        /* ==================== 全局样式 ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ==================== 魔法顶部标题 ==================== */
+        .app-header {
+            background: linear-gradient(135deg, var(--magic-pink) 0%, var(--magic-purple) 50%, var(--magic-blue) 100%);
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: 0 8px 30px rgba(168, 85, 247, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 2px, transparent 2px);
+            background-size: 40px 40px;
+            animation: sparkle 15s linear infinite;
+        }
+
+        @keyframes sparkle {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(40px, 40px); }
+        }
+
+        .app-header h1 {
+            font-size: 32px;
+            font-weight: 800;
+            color: white;
+            margin: 0;
+            text-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1;
+            letter-spacing: 1px;
+        }
+
+        /* ==================== 魔法内容布局 ==================== */
+        .content-wrapper {
+            display: flex;
+            gap: 24px;
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+            min-height: calc(100vh - 120px);
+        }
+
+        /* ==================== 左侧控制区 ==================== */
+        .control-panel {
+            width: 33.33%;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ==================== 右侧展示区 ==================== */
+        .display-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ==================== 魔法卡片 ==================== */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card h3 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--magic-purple);
+            margin: 0 0 16px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ==================== 魔法密钥卡片 ==================== */
+        .magic-key-card {
+            background: linear-gradient(135deg, #F5F3FF 0%, #FAF5FF 100%);
+            border-color: var(--magic-purple);
+        }
+
+        /* ==================== 主题卡片 ==================== */
+        .themes-card {
+            background: linear-gradient(135deg, #FFF0F5 0%, #FFF5F7 100%);
+            border-color: var(--magic-pink);
+        }
+
+        /* ==================== 输入卡片 ==================== */
+        .input-card {
+            background: linear-gradient(135deg, #F0F9FF 0%, #F0FDF4 100%);
+            border-color: var(--magic-blue);
+        }
+
+        /* ==================== 进度卡片 ==================== */
+        .progress-card {
+            background: linear-gradient(135deg, #FFF9E6 0%, #FEF3C7 100%);
+            border-color: var(--magic-yellow);
+        }
+
+        /* ==================== 表单样式 ==================== */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--magic-purple);
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 3px solid #E2E8F0;
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--magic-purple);
+            box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15);
+            transform: scale(1.01);
+        }
+
+        .input-hint {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        /* ==================== 魔法按钮 ==================== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-size: 14px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-sm {
+            padding: 8px 14px;
+            font-size: 12px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--magic-purple) 0%, var(--magic-pink) 100%);
+            color: white;
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .btn-primary.loading::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            top: 50%;
+            left: 50%;
+            margin-top: -12px;
+            margin-left: -12px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--magic-green) 0%, #22c55e 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(132, 204, 22, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+            color: var(--magic-blue);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+        }
+
+        /* ==================== 魔法主题卡片 ==================== */
+        .magic-themes {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .magic-theme-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 10px;
+            background: white;
+            border: 3px solid #E2E8F0;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .magic-theme-card:hover {
+            transform: translateY(-3px) scale(1.02);
+            border-color: var(--magic-purple);
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.2);
+        }
+
+        .magic-theme-card.selected {
+            border-color: var(--magic-purple);
+            background: linear-gradient(135deg, #F5F3FF 0%, #FAF5FF 100%);
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+            animation: magicBounce 0.5s ease;
+        }
+
+        @keyframes magicBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .theme-icon {
+            font-size: 32px;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .theme-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        /* ==================== 魔法展示框 ==================== */
+        .magic-display-frame {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            border: 4px solid transparent;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: linear-gradient(135deg, #F5F3FF 0%, #FFF0F5 50%, #F0FDF4 100%);
+            border-color: var(--magic-purple);
+            position: relative;
+        }
+
+        .magic-display-frame::before {
+            content: '✨';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            animation: twinkle 2s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .display-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, var(--magic-purple) 0%, var(--magic-pink) 100%);
+            color: white;
+            text-align: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .display-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: white;
+            margin: 16px;
+            border-radius: var(--border-radius-sm);
+            border: 3px dashed #E2E8F0;
+            min-height: 500px;
+        }
+
+        .display-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: var(--border-radius-sm);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        .display-actions {
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            background: linear-gradient(135deg, #FFF9E6 0%, #FEF3C7 100%);
+        }
+
+        .display-actions .btn {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        /* ==================== 魔法进度 ==================== */
+        .magic-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .magic-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: white;
+            border-radius: var(--border-radius-sm);
+            border: 3px solid #E2E8F0;
+            transition: all 0.3s ease;
+        }
+
+        .step-icon {
+            font-size: 20px;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        .step-text {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .step-status {
+            font-size: 20px;
+        }
+
+        .magic-step.completed {
+            background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+            border-color: var(--magic-green);
+        }
+
+        .magic-step.completed .step-status::after {
+            content: '✨';
+            color: var(--magic-green);
+            font-weight: bold;
+        }
+
+        .magic-step.in_progress {
+            background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+            border-color: var(--magic-purple);
+            animation: magicPulse 1.5s ease-in-out infinite;
+        }
+
+        .magic-step.in_progress .step-status::after {
+            content: '🔮';
+        }
+
+        @keyframes magicPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .magic-step.pending {
+            opacity: 0.5;
+        }
+
+        .magic-step.pending .step-status::after {
+            content: '⭕';
+            color: #CBD5E0;
+        }
+
+        /* ==================== 魔法进度条 ==================== */
+        .magic-progress-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .magic-progress-bar {
+            flex: 1;
+            height: 14px;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 3px solid #E2E8F0;
+        }
+
+        .magic-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--magic-purple) 0%, var(--magic-pink) 50%, var(--magic-blue) 100%);
+            background-size: 200% 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            width: 0%;
+            animation: magicShimmer 2s linear infinite;
+        }
+
+        @keyframes magicShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .progress-text {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--magic-purple);
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* ==================== 魔法提示 ==================== */
+        .magic-note {
+            padding: 12px;
+            background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+            border-radius: var(--border-radius-sm);
+            margin-top: 12px;
+            border: 2px dashed var(--magic-orange);
+        }
+
+        .magic-note p {
+            margin: 0;
+            font-size: 12px;
+            color: #92400E;
+            font-weight: 600;
+        }
+
+        /* ==================== 魔法Toast ==================== */
+        .magic-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: var(--border-radius-sm);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            animation: magicSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 380px;
+            border: 3px solid;
+        }
+
+        @keyframes magicSlideIn {
+            from {
+                transform: translateX(120%) rotate(-10deg);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0) rotate(0);
+                opacity: 1;
+            }
+        }
+
+        .magic-toast.success {
+            background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+            border-color: var(--magic-green);
+            color: #166534;
+        }
+
+        .magic-toast.error {
+            background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+            border-color: #EF4444;
+            color: #991B1B;
+        }
+
+        .toast-icon {
+            font-size: 22px;
+        }
+
+        .toast-message {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: inherit;
+            padding: 0;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .toast-close:hover {
+            background: rgba(0,0,0,0.1);
+        }
+
+        /* ==================== 魔法装饰 ==================== */
+        .magic-decoration {
+            position: fixed;
+            font-size: 36px;
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .magic-decoration-1 { top: 12%; left: 3%; animation: floatMagic1 6s ease-in-out infinite; }
+        .magic-decoration-2 { top: 25%; right: 6%; animation: floatMagic2 8s ease-in-out infinite; }
+        .magic-decoration-3 { bottom: 15%; left: 8%; animation: floatMagic3 7s ease-in-out infinite; }
+        .magic-decoration-4 { bottom: 30%; right: 4%; animation: floatMagic1 9s ease-in-out infinite; }
+
+        @keyframes floatMagic1 {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        @keyframes floatMagic2 {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(-5deg); }
+        }
+
+        @keyframes floatMagic3 {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-25px) scale(1.1); }
+        }
+
+        /* ==================== 响应式 ==================== */
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+
+            .control-panel {
+                width: 100%;
+            }
+
+            .magic-themes {
+                grid-template-columns: repeat(5, 1fr);
+            }
+
+            .display-content {
+                min-height: 350px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .app-header h1 {
+                font-size: 22px;
+            }
+
+            .content-wrapper {
+                padding: 12px;
+            }
+
+            .magic-themes {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .display-actions {
+                flex-direction: column;
+            }
+
+            .display-actions .btn {
+                max-width: none;
+            }
+
+            .magic-decoration {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 魔法装饰 -->
+    <div class="magic-decoration magic-decoration-1">✨</div>
+    <div class="magic-decoration magic-decoration-2">🔮</div>
+    <div class="magic-decoration magic-decoration-3">⭐</div>
+    <div class="magic-decoration magic-decoration-4">🌟</div>
+
+    <div class="app-container">
+        <!-- 魔法标题 -->
+        <header class="app-header">
+            <h1>🔮 魔法识字小报生成器 ✨</h1>
+        </header>
+
+        <!-- 魔法内容 -->
+        <div class="content-wrapper">
+            <!-- 左侧控制区 -->
+            <aside class="control-panel">
+                <!-- 魔法密钥 -->
+                <div class="card magic-key-card">
+                    <h3>🔑 魔法密钥</h3>
+
+                    <div class="form-group">
+                        <label for="imageApiKey">画笔密钥</label>
+                        <input type="password" id="imageApiKey" placeholder="输入你的魔法密钥..." autocomplete="off">
+                        <div style="margin-top: 8px; display: flex; gap: 10px; align-items: center;">
+                            <button id="btnSaveImageKey" class="btn btn-sm btn-secondary">✨ 保存</button>
+                            <span id="imageKeyStatus" class="input-hint"></span>
+                        </div>
+                    </div>
+
+                    <div class="magic-note">
+                        <p>🔮 密钥会保存在魔法书里，下次不用重新输入哦~</p>
+                    </div>
+                </div>
+
+                <!-- 选择主题 -->
+                <div class="card themes-card">
+                    <h3>📖 选择魔法主题</h3>
+                    <div class="magic-themes" id="presetThemes">
+                        <!-- JS生成 -->
+                    </div>
+                </div>
+
+                <!-- 填写信息 -->
+                <div class="card input-card">
+                    <h3>🪄 魔法咒语</h3>
+
+                    <div class="form-group">
+                        <label for="theme">🎯 魔法场景</label>
+                        <input type="text" id="theme" placeholder="比如：超市、医院、公园...">
+                        <small class="input-hint">说出你想要施展魔法的地方吧~</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">📜 小报标题</label>
+                        <input type="text" id="title" placeholder="比如：《走进超市》《快乐医院》">
+                        <small class="input-hint">给小报起一个神奇的名字吧~</small>
+                    </div>
+
+                    <div style="margin-top: 16px;">
+                        <button id="btnGenerate" class="btn btn-primary" disabled>
+                            🪄 施展魔法！
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 魔法进度 -->
+                <div class="card progress-card">
+                    <h3>⚡ 魔法进程</h3>
+
+                    <div class="magic-steps">
+                        <div class="magic-step pending" id="step1">
+                            <span class="step-icon">1️⃣</span>
+                            <span class="step-text">准备魔法咒语</span>
+                            <span class="step-status"></span>
+                        </div>
+                        <div class="magic-step pending" id="step2">
+                            <span class="step-icon">2️⃣</span>
+                            <span class="step-text">施展绘画魔法</span>
+                            <span class="step-status"></span>
+                        </div>
+                        <div class="magic-step pending" id="step3">
+                            <span class="step-icon">3️⃣</span>
+                            <span class="step-text">等待魔法完成</span>
+                            <span class="step-status"></span>
+                        </div>
+                    </div>
+
+                    <div class="magic-progress-container">
+                        <div class="magic-progress-bar">
+                            <div class="magic-progress-fill" id="progressFill"></div>
+                        </div>
+                        <span class="progress-text" id="progressText">0%</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 右侧展示区 -->
+            <main class="display-panel">
+                <div class="magic-display-frame">
+                    <div class="display-header">
+                        ✨ 你的魔法小报 ✨
+                    </div>
+                    <div class="display-content" id="resultContainer">
+                        <img id="displayImage" class="display-image" src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=1000&fit=crop" alt="魔法小报">
+                    </div>
+                    <div class="display-actions" id="resultActions">
+                        <button id="btnDownload" class="btn btn-success">
+                            ⬇️ 收藏魔法
+                        </button>
+                        <button id="btnRegenerate" class="btn btn-secondary">
+                            🔄 重新施展
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast容器 -->
+    <div id="toastContainer"></div>
+
+    <script>
+        // ==================== 预设主题数据 ====================
+        const PRESET_THEMES = [
+            { theme: '超市', icon: '🛒', title: '《走进超市》' },
+            { theme: '医院', icon: '🏥', title: '《快乐医院》' },
+            { theme: '公园', icon: '🌳', title: '《美丽的公园》' },
+            { theme: '学校', icon: '🏫', title: '《我的学校》' },
+            { theme: '动物园', icon: '🦁', title: '《动物园一日游》' },
+            { theme: '图书馆', icon: '📚', title: '《图书馆里》' },
+            { theme: '消防站', icon: '🚒', title: '《小小消防员》' },
+            { theme: '餐厅', icon: '🍽️', title: '《美食餐厅》' },
+            { theme: '警察局', icon: '👮', title: '《警察局》' },
+            { theme: '邮局', icon: '📮', title: '《邮局送信》' }
+        ];
+
+        // ==================== 配置管理 ====================
+        class ConfigManager {
+            static STORAGE_KEY = 'magic_literacy_image_api_key';
+
+            static saveApiKey(key) {
+                try {
+                    localStorage.setItem(this.STORAGE_KEY, key);
+                    return true;
+                } catch (error) {
+                    console.error('保存失败:', error);
+                    return false;
+                }
+            }
+
+            static getApiKey() {
+                return localStorage.getItem(this.STORAGE_KEY);
+            }
+
+            static isConfigured() {
+                return !!this.getApiKey();
+            }
+        }
+
+        // ==================== 提示词构建 ====================
+        class PromptBuilder {
+            buildPrompt(theme, title) {
+                return `请生成一张儿童识字小报《${theme}》，竖版 A4，学习小报版式，适合 5–9 岁孩子 认字与看图识物。
+
+# 一、小报标题区（顶部）
+
+**顶部居中大标题**：《${title}》
+* **风格**：十字小报 / 儿童学习报感
+* **文本要求**：大字、醒目、卡通手写体、彩色描边
+* **装饰**：周围添加与 ${theme} 相关的贴纸风装饰，颜色鲜艳
+
+# 二、小报主体（中间主画面）
+
+画面中心是一幅 **卡通插画风的「${theme}」场景**：
+* **整体气氛**：明亮、温暖、积极
+* **构图**：物体边界清晰，方便对应文字，不要过于拥挤。
+
+**场景分区与核心内容**
+1.  **核心区域 A（主要对象）**：表现 ${theme} 的核心活动。
+2.  **核心区域 B（配套设施）**：展示相关的工具或物品。
+3.  **核心区域 C（环境背景）**：体现环境特征（如墙面、指示牌等）。
+
+**主题人物**
+* **角色**：1 位可爱卡通人物（职业/身份：与 ${theme} 匹配）。
+* **动作**：正在进行与场景相关的自然互动。
+
+# 三、必画物体与识字清单
+
+**请根据「${theme}」主题，自动联想15-20个适合儿童识字的词汇（包含核心角色与设施、常见物品/工具、环境与装饰），并为每个物体贴上中文识字标签。**
+
+识字标签格式：
+* **格式**：两行制（第一行拼音带声调，第二行简体汉字）。
+* **样式**：彩色小贴纸风格，白底黑字或深色字，清晰可读。
+* **排版**：标签靠近对应的物体，不遮挡主体。
+
+# 四、画风参数
+* **风格**：儿童绘本风 + 识字小报风
+* **色彩**：高饱和、明快、温暖 (High Saturation, Warm Tone)
+* **质量**：8k resolution, high detail, vector illustration style, clean lines.`;
+            }
+        }
+
+        // ==================== 图片生成 ====================
+        class ImageGenerator {
+            constructor(apiKey) {
+                this.apiKey = apiKey;
+                this.baseUrl = 'https://api.kie.ai/api/v1/jobs';
+            }
+
+            async createTask(prompt) {
+                const requestBody = {
+                    model: 'nano-banana-pro',
+                    input: {
+                        prompt: prompt,
+                        image_input: [],
+                        aspect_ratio: '3:4',
+                        resolution: '4K',
+                        output_format: 'png'
+                    }
+                };
+
+                try {
+                    const response = await fetch(`${this.baseUrl}/createTask`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.apiKey}`
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.msg || `请求失败: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    return {
+                        success: true,
+                        taskId: data.data.taskId
+                    };
+
+                } catch (error) {
+                    console.error('创建任务失败:', error);
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
+            }
+
+            async queryTaskStatus(taskId) {
+                try {
+                    const response = await fetch(
+                        `${this.baseUrl}/recordInfo?taskId=${encodeURIComponent(taskId)}`,
+                        {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${this.apiKey}`
+                            }
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(`查询失败: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    return {
+                        success: true,
+                        state: data.data.state,
+                        resultJson: data.data.resultJson,
+                        failCode: data.data.failCode,
+                        failMsg: data.data.failMsg
+                    };
+
+                } catch (error) {
+                    console.error('查询失败:', error);
+                    return {
+                        success: false,
+                        error: error.message
+                    };
+                }
+            }
+
+            extractImageUrl(resultJson) {
+                try {
+                    const result = JSON.parse(resultJson);
+                    if (result.resultUrls && result.resultUrls.length > 0) {
+                        return result.resultUrls[0];
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('解析结果失败:', error);
+                    return null;
+                }
+            }
+        }
+
+        // ==================== 任务轮询 ====================
+        class TaskPoller {
+            constructor(imageGenerator) {
+                this.imageGenerator = imageGenerator;
+                this.pollInterval = 3000;
+                this.maxAttempts = 60;
+                this.currentPollId = 0;
+            }
+
+            async pollTask(taskId, onProgress, onComplete, onError) {
+                const pollId = ++this.currentPollId;
+                let attempts = 0;
+
+                onProgress(5, '魔法开始...');
+
+                const poll = async () => {
+                    if (pollId !== this.currentPollId) {
+                        return;
+                    }
+
+                    attempts++;
+
+                    try {
+                        const result = await this.imageGenerator.queryTaskStatus(taskId);
+
+                        if (!result.success) {
+                            onError(result.error);
+                            return;
+                        }
+
+                        const progress = Math.min(5 + (attempts / this.maxAttempts) * 90, 95);
+
+                        switch (result.state) {
+                            case 'waiting':
+                                if (attempts >= this.maxAttempts) {
+                                    onError('魔法需要太久啦，再试一次吧~');
+                                    return;
+                                }
+                                onProgress(progress, `魔法施展中... ${attempts}`);
+                                setTimeout(poll, this.pollInterval);
+                                break;
+
+                            case 'success':
+                                const imageUrl = this.imageGenerator.extractImageUrl(result.resultJson);
+                                if (imageUrl) {
+                                    onProgress(100, '魔法完成！');
+                                    onComplete(imageUrl);
+                                } else {
+                                    onError('魔法好像失效了~');
+                                }
+                                break;
+
+                            case 'fail':
+                                onError(result.failMsg || '魔法施展失败啦~');
+                                break;
+                        }
+
+                    } catch (error) {
+                        onError(error.message);
+                    }
+                };
+
+                await poll();
+            }
+
+            cancel() {
+                this.currentPollId++;
+            }
+        }
+
+        // ==================== Toast通知 ====================
+        class Toast {
+            static show(message, type = 'success', duration = 3000) {
+                const toast = document.createElement('div');
+                toast.className = `magic-toast ${type}`;
+                toast.innerHTML = `
+                    <span class="toast-icon">${type === 'success' ? '✨' : '😢'}</span>
+                    <span class="toast-message">${this._escapeHtml(message)}</span>
+                    <button class="toast-close">×</button>
+                `;
+
+                document.getElementById('toastContainer').appendChild(toast);
+
+                const timeout = setTimeout(() => {
+                    this._removeToast(toast);
+                }, duration);
+
+                toast.querySelector('.toast-close').addEventListener('click', () => {
+                    clearTimeout(timeout);
+                    this._removeToast(toast);
+                });
+            }
+
+            static success(message, duration) {
+                this.show(message, 'success', duration);
+            }
+
+            static error(message, duration) {
+                this.show(message, 'error', duration || 5000);
+            }
+
+            static _removeToast(toast) {
+                toast.style.animation = 'magicSlideIn 0.3s reverse';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }
+
+            static _escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // ==================== 主控制器 ====================
+        class AppController {
+            constructor() {
+                this.promptBuilder = new PromptBuilder();
+                this.imageGenerator = null;
+                this.taskPoller = null;
+                this.currentImageUrl = null;
+
+                this._initializeUI();
+                this._loadSavedApiKey();
+                this._bindEvents();
+                this._checkGenerateButton();
+            }
+
+            _initializeUI() {
+                this.ui = {
+                    themeInput: document.getElementById('theme'),
+                    titleInput: document.getElementById('title'),
+                    imageApiKeyInput: document.getElementById('imageApiKey'),
+                    presetThemes: document.getElementById('presetThemes'),
+                    generateBtn: document.getElementById('btnGenerate'),
+                    downloadBtn: document.getElementById('btnDownload'),
+                    regenerateBtn: document.getElementById('btnRegenerate'),
+                    displayImage: document.getElementById('displayImage'),
+                    progressFill: document.getElementById('progressFill'),
+                    progressText: document.getElementById('progressText'),
+                    btnSaveImageKey: document.getElementById('btnSaveImageKey'),
+                    imageKeyStatus: document.getElementById('imageKeyStatus')
+                };
+
+                this._renderPresetThemes();
+            }
+
+            _renderPresetThemes() {
+                this.ui.presetThemes.innerHTML = PRESET_THEMES.map(preset => `
+                    <div class="magic-theme-card" data-theme="${preset.theme}" data-title="${preset.title}">
+                        <span class="theme-icon">${preset.icon}</span>
+                        <span class="theme-name">${preset.theme}</span>
+                    </div>
+                `).join('');
+            }
+
+            _loadSavedApiKey() {
+                const imageKey = ConfigManager.getApiKey();
+
+                if (imageKey) {
+                    this.ui.imageApiKeyInput.value = imageKey;
+                    this.ui.imageKeyStatus.textContent = '✅ 已保存';
+                    this.ui.imageKeyStatus.style.color = 'var(--magic-green)';
+                }
+
+                this._initializeServices();
+            }
+
+            _initializeServices() {
+                const imageApiKey = ConfigManager.getApiKey();
+
+                if (imageApiKey) {
+                    this.imageGenerator = new ImageGenerator(imageApiKey);
+                    this.taskPoller = new TaskPoller(this.imageGenerator);
+                }
+
+                this._checkGenerateButton();
+            }
+
+            _bindEvents() {
+                // API Key保存
+                this.ui.btnSaveImageKey.addEventListener('click', () => {
+                    const key = this.ui.imageApiKeyInput.value.trim();
+                    if (key.length < 10) {
+                        Toast.error('密钥格式好像不对哦~');
+                        return;
+                    }
+                    if (ConfigManager.saveApiKey(key)) {
+                        this.ui.imageKeyStatus.textContent = '✅ 已保存';
+                        this.ui.imageKeyStatus.style.color = 'var(--magic-green)';
+                        Toast.success('魔法密钥保存成功啦！');
+                        this._initializeServices();
+                    }
+                });
+
+                // 预设主题点击
+                this.ui.presetThemes.addEventListener('click', (e) => {
+                    const card = e.target.closest('.magic-theme-card');
+                    if (card) {
+                        document.querySelectorAll('.magic-theme-card').forEach(c => c.classList.remove('selected'));
+                        card.classList.add('selected');
+
+                        this.ui.themeInput.value = card.dataset.theme;
+                        this.ui.titleInput.value = card.dataset.title;
+                        this._checkGenerateButton();
+                    }
+                });
+
+                // 输入框变化
+                this.ui.themeInput.addEventListener('input', () => this._checkGenerateButton());
+                this.ui.titleInput.addEventListener('input', () => this._checkGenerateButton());
+
+                // 生成按钮
+                this.ui.generateBtn.addEventListener('click', () => this.generateNewsletter());
+
+                // 下载按钮
+                this.ui.downloadBtn.addEventListener('click', () => this.downloadImage());
+
+                // 重新生成按钮
+                this.ui.regenerateBtn.addEventListener('click', () => this.generateNewsletter());
+            }
+
+            _checkGenerateButton() {
+                const hasTheme = this.ui.themeInput.value.trim().length > 0;
+                const hasTitle = this.ui.titleInput.value.trim().length > 0;
+                const hasConfig = ConfigManager.isConfigured();
+                this.ui.generateBtn.disabled = !(hasTheme && hasTitle && hasConfig);
+            }
+
+            _updateStepStatus(stepNum, status) {
+                const step = document.getElementById(`step${stepNum}`);
+                step.className = `magic-step ${status}`;
+            }
+
+            _updateProgress(progress, message) {
+                this.ui.progressFill.style.width = `${progress}%`;
+                this.ui.progressText.textContent = `${Math.round(progress)}%`;
+            }
+
+            _resetAllSteps() {
+                for (let i = 1; i <= 3; i++) {
+                    this._updateStepStatus(i, 'pending');
+                }
+                this._updateProgress(0, '');
+            }
+
+            _displayResult(imageUrl) {
+                this.currentImageUrl = imageUrl;
+                this.ui.displayImage.src = imageUrl;
+            }
+
+            async generateNewsletter() {
+                const theme = this.ui.themeInput.value.trim();
+                const title = this.ui.titleInput.value.trim();
+
+                if (!theme || !title) {
+                    Toast.error('请把魔法场景和标题都填上哦~');
+                    return;
+                }
+
+                this.ui.generateBtn.disabled = true;
+                this.ui.generateBtn.classList.add('loading');
+                this._resetAllSteps();
+
+                try {
+                    // Step 1: 拼接提示词
+                    this._updateStepStatus(1, 'in_progress');
+                    const fullPrompt = this.promptBuilder.buildPrompt(theme, title);
+                    this._updateStepStatus(1, 'completed');
+
+                    // Step 2: 创建图片生成任务
+                    this._updateStepStatus(2, 'in_progress');
+                    const taskResult = await this.imageGenerator.createTask(fullPrompt);
+
+                    if (!taskResult.success) {
+                        throw new Error(`创建任务失败: ${taskResult.error}`);
+                    }
+
+                    this._updateStepStatus(2, 'completed');
+
+                    // Step 3: 轮询等待图片生成
+                    this._updateStepStatus(3, 'in_progress');
+
+                    await this.taskPoller.pollTask(
+                        taskResult.taskId,
+                        (progress, message) => {
+                            this._updateProgress(progress, message);
+                        },
+                        (imageUrl) => {
+                            this._updateStepStatus(3, 'completed');
+                            this._displayResult(imageUrl);
+                            this.ui.generateBtn.disabled = false;
+                            this.ui.generateBtn.classList.remove('loading');
+                            Toast.success('魔法小报生成好啦！');
+                        },
+                        (error) => {
+                            throw new Error(error);
+                        }
+                    );
+
+                } catch (error) {
+                    console.error('生成失败:', error);
+                    Toast.error(error.message);
+                    this.ui.generateBtn.disabled = false;
+                    this.ui.generateBtn.classList.remove('loading');
+                    this._resetAllSteps();
+                }
+            }
+
+            async downloadImage() {
+                if (!this.currentImageUrl) {
+                    Toast.error('没有可收藏的魔法小报哦~');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(this.currentImageUrl);
+                    const blob = await response.blob();
+
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `魔法识字小报_${Date.now()}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+
+                    Toast.success('魔法小报收藏成功！');
+                } catch (error) {
+                    console.error('下载失败:', error);
+                    Toast.error('收藏失败: ' + error.message);
+                }
+            }
+        }
+
+        // ==================== 初始化应用 ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            new AppController();
+        });
+    </script>
+</body>
+</html>
